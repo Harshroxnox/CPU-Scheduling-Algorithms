@@ -7,6 +7,7 @@ using namespace std;
 
 // first int represents id of process -1 in case of gaps second int represents the length of block
 vector<pair<int, int>> gantt_chart;
+int scheduling_length;
 
 class process {
 public:
@@ -159,6 +160,7 @@ void calc_attributes(vector<process>& list){
                 list[process_index].response_time = curr_time - list[process_index].arrival_time;
             }
             list[process_index].completion_time = curr_time + time_interval;
+            scheduling_length = list[process_index].completion_time;
             list[process_index].remaining_time -= time_interval;
             if(list[process_index].remaining_time == 0){
                 ready_queue.pop();
@@ -198,13 +200,12 @@ void calc_avg(vector<process>& list){
     avg_tat = (float)avg_tat/n;
     avg_wt = (float)avg_wt/n;
     avg_rt = (float)avg_rt/n;
-    int scheduling_len = list.back().completion_time;
-    float throughput = (float)n/scheduling_len;
+    float throughput = (float)n/scheduling_length;
 
     cout << "Average TAT : " << avg_tat << endl;
     cout << "Average WT : " << avg_wt << endl;
     cout << "Average RT : " << avg_rt << endl;
-    cout << "Scheduling Length : " << scheduling_len << endl;
+    cout << "Scheduling Length : " << scheduling_length << endl;
     cout << "Throughput : " << throughput << endl;
 }
 

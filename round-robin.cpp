@@ -6,6 +6,7 @@
 using namespace std;
 
 vector<pair<int, int>> gantt_chart;
+int scheduling_length;
 
 class process {
 public:
@@ -119,6 +120,7 @@ void calc_attributes(vector<process>& list, int time_quantum){
                 list[process_index].response_time = curr_time - list[process_index].arrival_time;
             }
             list[process_index].completion_time = curr_time + time_interval;
+            scheduling_length = list[process_index].completion_time;
             list[process_index].remaining_time -= time_interval;
             // update gantt chart and curr time
             gantt_chart.push_back({pid, time_interval});
@@ -156,13 +158,12 @@ void calc_avg(vector<process>& list){
     avg_tat = (float)avg_tat/n;
     avg_wt = (float)avg_wt/n;
     avg_rt = (float)avg_rt/n;
-    int scheduling_len = list.back().completion_time;
-    float throughput = (float)n/scheduling_len;
+    float throughput = (float)n/scheduling_length;
 
     cout << "Average TAT : " << avg_tat << endl;
     cout << "Average WT : " << avg_wt << endl;
     cout << "Average RT : " << avg_rt << endl;
-    cout << "Scheduling Length : " << scheduling_len << endl;
+    cout << "Scheduling Length : " << scheduling_length << endl;
     cout << "Throughput : " << throughput << endl;
 }
 
