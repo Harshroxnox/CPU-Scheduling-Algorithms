@@ -17,11 +17,13 @@ public:
     int turn_around_time;
     int waiting_time;
     int response_time;
+    int remaining_time;
 
     process(int id, int at, int bt){
         pid = id;
         arrival_time = at;
         burst_time = bt;
+        remaining_time = bt;
         completion_time = -1;
         turn_around_time = -1;
         waiting_time = -1;
@@ -36,6 +38,7 @@ public:
         turn_around_time = -1;
         waiting_time = -1;
         response_time = -1;
+        remaining_time = -1;
     }
 
     bool operator < (process p1){
@@ -47,21 +50,6 @@ public:
             return true;
         }
         return false;
-    }
-};
-
-// Reverse comparison function in order to convert the max priority queue into min priority queue
-// min arrival time should be at top
-struct ready_queue_compare {
-    bool operator()(process& p1, process& p2){
-        if(p1.arrival_time < p2.arrival_time){
-            return false;
-        }else if(p1.arrival_time > p2.arrival_time){
-            return true;
-        }else if(p1.pid < p2.pid){
-            return false;
-        }
-        return true;
     }
 };
 
@@ -85,19 +73,18 @@ void print_table(vector<process>& list){
 }
 
 // This function is the main working of every scheduling algorithm!!!
-void calc_attributes(vector<process>& list){
+void calc_attributes(vector<process>& list, int time_quantum){
     queue<process> ready_queue;
-    int time_quantum = 2;
     int n = list.size();
     int next_process = 0;
     int curr_time = 0;
 
-    while(true){
-        while(next_process<n && list[next_process].arrival_time <= curr_time){
-            ready_queue.push(list[next_process]);
-            next_process++;
-        }
+    while(next_process<n && list[next_process].arrival_time <= curr_time){
+        ready_queue.push(list[next_process]);
+        next_process++;
+    }
 
+    while(true){
         // ready_queue is ready now two cases either gap or process
         // gap 
         if(ready_queue.empty()){
@@ -107,27 +94,50 @@ void calc_attributes(vector<process>& list){
             int gap_length = list[next_process].arrival_time - curr_time;
             curr_time += gap_length;
             gantt_chart.push_back({-1, gap_length});
+            while(next_process<n && list[next_process].arrival_time <= curr_time){
+                ready_queue.push(list[next_process]);
+                next_process++;
+            }
         }
 
         // process
         if(!ready_queue.empty()){
-            int pid = ready_queue.top().pid;
-            int curr_process;
+            // get curr process
+            int pid = ready_queue.front().pid;
+            int process_index;
             for(int i=0; i<n; i++){
                 if(list[i].pid == pid){
-                    curr_process = i;
+                    process_index = i;
                     break;
                 }
             }
-            list[curr_process].completion_time = curr_time + list[curr_process].burst_time;
-            list[curr_process].response_time = curr_time - list[curr_process].arrival_time;
-            list[curr_process].turn_around_time = list[curr_process].completion_time - list[curr_process].arrival_time;
-            list[curr_process].waiting_time = list[curr_process].turn_around_time - list[curr_process].burst_time;
-
-            gantt_chart.push_back({pid, list[curr_process].burst_time});
-            curr_time += list[curr_process].burst_time;
+            process& p = list[process_index];
+            // calc time interval
+            int time_interval = min(list[process_index].remaining_time, time_quantum);
+            // update process attributes
+            if(list[process_index].remaining_time == list[process_index].burst_time){
+                list[process_index].response_time = curr_time - list[process_index].arrival_time;
+            }
+            list[process_index].completion_time = curr_time + time_interval;
+            list[process_index].remaining_time -= time_interval;
+            // update gantt chart and curr time
+            gantt_chart.push_back({pid, time_interval});
+            curr_time += time_interval;
+            // update the ready queue
             ready_queue.pop();
+            while(next_process<n && list[next_process].arrival_time <= curr_time){
+                ready_queue.push(list[next_process]);
+                next_process++;
+            }
+            if(list[process_index].remaining_time != 0){
+                ready_queue.push(list[process_index]);
+            }                   
         }
+    }
+    // calc TAT and WT for all process's
+    for(auto& p : list){
+        p.turn_around_time = p.completion_time - p.arrival_time;
+        p.waiting_time = p.turn_around_time - p.burst_time;
     }
 }
 
@@ -204,16 +214,15 @@ int main(){
 
     // Case 1
     // Hard coded input ->
-
+    int time_quantum = 2;
     vector<process> list = {
         process(1, 2, 2),
         process(2, 5, 3),
-        process(3, 3, 4),
         process(4, 6, 4)
     };
     
     sort(list.begin(), list.end());
-    calc_attributes(list);
+    calc_attributes(list, time_quantum);
     
     print_table(list);
     calc_avg(list);
@@ -221,10 +230,12 @@ int main(){
 
     // Case 2
     // Taking input from user 
-    /*
+    
     int n;
     cout << "Enter no. of process: ";
     cin >> n;
+    cout << "Enter time quantum: ";
+    cin >> time_quantum;
     vector<process> list2;
 
     for(int i=0; i<n; i++){
@@ -235,11 +246,11 @@ int main(){
     }
 
     sort(list2.begin(), list2.end());
-    calc_attributes(list2);
+    calc_attributes(list2, time_quantum);
 
     print_table(list2);
     calc_avg(list2);
     print_gantt_chart(list2);
-    */
+    
     return 0;
 }
