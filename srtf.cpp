@@ -118,14 +118,12 @@ void calc_attributes(vector<process>& list){
                 break;
             }
             curr_process = -1;
+            // if Switching is there then push in gantt chart
+            // first time don't push because no prev_process
             if((!first_loop) && curr_process != prev_process){
                 gantt_chart.push_back({prev_process, process_length});
                 process_length = 0;
             }
-            // first time don't check
-            // curr process != prev process then insert into gantt chart 
-            // inserting (prev_process, process_length)
-            // reset process_length
             int time_interval = list[next_process].arrival_time - curr_time;
             process_length += time_interval;
             curr_time += time_interval;
@@ -134,14 +132,12 @@ void calc_attributes(vector<process>& list){
         // process
         if(!ready_queue.empty()){
             curr_process = ready_queue.top().pid;
+            // Should we push in gantt chart ? 
             if((!first_loop) && curr_process != prev_process){
                 gantt_chart.push_back({prev_process, process_length});
                 process_length = 0;
             }
-            // first time don't check
-            // curr process != prev process then insert into gantt chart 
-            // inserting (prev_process, process_length)
-            // reset process_length
+
             int process_index;
             for(int i=0; i<n; i++){
                 if(list[i].pid == curr_process){
